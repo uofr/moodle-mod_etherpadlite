@@ -92,24 +92,20 @@ else {
 $groupID = explode('$', $padId);
 $groupID = $groupID[0];
 
-// create author if not exists for logged in user (with first and lastname)
+// create author if not exists for logged in user (with full name as it is obtained from Moodle core library)
 try {
-	if(isguestuser() && etherpadlite_guestsallowed($etherpadlite)) {
-		$author = $instance->createAuthor('Guest-'.etherpadlite_genRandomString());
-	}
-  else if(isset($USER->firstname, $USER->lastname)) {
-  	$userName = $USER->firstname.' '.$USER->lastname;
-  	$author = $instance->createAuthorIfNotExistsFor($USER->id, $userName);
-  }
-  else {
-  	$author = $instance->createAuthorIfNotExistsFor($USER->id);
-  }
-  $authorID = $author->authorID;
-//echo "The AuthorID is now $authorID\n\n";
+    if(isguestuser() && etherpadlite_guestsallowed($etherpadlite)) {
+        $author = $instance->createAuthor('Guest-'.etherpadlite_genRandomString());
+    }
+    else {
+        $author = $instance->createAuthorIfNotExistsFor($USER->id, fullname($USER));
+    }
+    $authorID = $author->authorID;
+    //echo "The AuthorID is now $authorID\n\n";
 } catch (Exception $e) {
-  // the pad already exists or something else went wrong
-  //echo "\n\ncreateAuthor Failed with message:  ". $e->getMessage();
-  throw $e;
+    // the pad already exists or something else went wrong
+    //echo "\n\ncreateAuthor Failed with message:  ". $e->getMessage();
+    throw $e;
 }
 
 //$validUntil = mktime(0, 0, 0, date("m"), date("d")+1, date("y")); // +1 day in the future
@@ -136,7 +132,7 @@ ini_set('arg_separator.output', $separator);
 $context = context_module::instance($cm->id);
 
 /// Print the page header
-$PAGE->set_title("Etherpad Lite: ".format_string($etherpadlite->name));
+$PAGE->set_title(get_string('modulename', 'mod_etherpadlite').': '.format_string($etherpadlite->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
 
@@ -144,12 +140,14 @@ echo $OUTPUT->header();
 
 /// Print the main part of the page
 
-$summary = format_module_intro('etherpadite', $etherpadlite, $cm->id);
+echo $OUTPUT->heading($etherpadlite->name);
+
+$summary = format_module_intro('etherpadlite', $etherpadlite, $cm->id);
 if(isguestuser() && !etherpadlite_guestsallowed($etherpadlite)) {
 	$summary.= "<br/><br/>".get_string('summaryguest','etherpadlite');
 }
 if(!empty($summary)) {
-	echo $OUTPUT->box($summary, 'generalbox mod_introbox', 'etherpadliteintro');
+	echo $OUTPUT->box($summary, 'generalbox mod_introbox');
 }
 echo '<iframe id="etherpadiframe" src ="'.$fullurl.'" width="100%", height="500px"></iframe>';
 echo '<script type="text/javascript">
